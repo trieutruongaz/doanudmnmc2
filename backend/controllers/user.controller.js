@@ -114,40 +114,45 @@ export const logout = async (req, res) => {
 export const updateProfile = async (req, res) => {
     try {
         const { fullname, email, phoneNumber, bio, skills } = req.body;
-        
+
         const file = req.file;
-        // cloudinary ayega idhar
-        const fileUri = getDataUri(file);
-        const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
+        let resumeUrl = '';
+        let resumeOriginalName = '';
 
-
+        // Handle file upload if file exists
+        if (file) {
+            const fileUri = getDataUri(file);
+            const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
+            resumeUrl = cloudResponse.secure_url;
+            resumeOriginalName = file.originalname;
+        }
 
         let skillsArray;
-        if(skills){
+        if (skills) {
             skillsArray = skills.split(",");
         }
+
         const userId = req.id; // middleware authentication
         let user = await User.findById(userId);
 
         if (!user) {
             return res.status(400).json({
                 message: "User not found.",
-                success: false
-            })
-        }
-        // updating data
-        if(fullname) user.fullname = fullname
-        if(email) user.email = email
-        if(phoneNumber)  user.phoneNumber = phoneNumber
-        if(bio) user.profile.bio = bio
-        if(skills) user.profile.skills = skillsArray
-      
-        // resume comes later here...
-        if(cloudResponse){
-            user.profile.resume = cloudResponse.secure_url // save the cloudinary url
-            user.profile.resumeOriginalName = file.originalname // Save the original file name
+                success: false,
+            });
         }
 
+        // Update fields if provided
+        if (fullname) user.fullname = fullname;
+        if (email) user.email = email;
+        if (phoneNumber) user.phoneNumber = phoneNumber;
+        if (bio) user.profile.bio = bio;
+        if (skills) user.profile.skills = skillsArray;
+
+        if (resumeUrl) {
+            user.profile.resume = resumeUrl; // Save the Cloudinary URL
+            user.profile.resumeOriginalName = resumeOriginalName; // Save the original file name
+        }
 
         await user.save();
 
@@ -157,15 +162,19 @@ export const updateProfile = async (req, res) => {
             email: user.email,
             phoneNumber: user.phoneNumber,
             role: user.role,
-            profile: user.profile
-        }
+            profile: user.profile,
+        };
 
         return res.status(200).json({
-            message:"Profile updated successfully.",
+            message: "Profile updated successfully.",
             user,
-            success:true
-        })
+            success: true,
+        });
     } catch (error) {
-        console.log(error);
+        console.error(error);
+        return res.status(500).json({
+            message: "Internal server error.",
+            success: false,
+        });
     }
-}
+};

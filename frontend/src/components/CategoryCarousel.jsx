@@ -6,11 +6,11 @@ import { useNavigate } from 'react-router-dom';
 import { setSearchedQuery } from '@/redux/jobSlice';
 
 const category = [
-    "Frontend Developer",
-    "Backend Developer",
-    "Data Science",
-    "Graphic Designer",
-    "FullStack Developer"
+    "Lập Trình Viên",
+    "Xây Dựng",
+    "Xuất Nhập Khẩu",
+    "Sản Xuất Hàng Tiên Dùng",
+    "Tư Vấn Dịch Vụ"
 ]
 
 const CategoryCarousel = () => {
